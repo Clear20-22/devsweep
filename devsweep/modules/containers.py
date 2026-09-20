@@ -9,7 +9,7 @@ from typing import List
 
 from devsweep.core.models import Category, Finding, SafetyLevel
 from devsweep.core.scanner import BaseScanner
-from devsweep.core.utils import get_dir_size, get_home_dir, is_macos, is_windows
+from devsweep.core.utils import get_dir_size, get_home_dir, get_local_cache_dir, is_macos, is_windows
 
 
 class ContainerScanner(BaseScanner):
@@ -24,13 +24,14 @@ class ContainerScanner(BaseScanner):
     def scan(self) -> List[Finding]:
         findings: List[Finding] = []
         home = get_home_dir()
+        local_app_data = get_local_cache_dir()
 
         # -------------------------------------------------------------
         # 1. Docker Desktop Virtual Disk & System Data
         # -------------------------------------------------------------
         docker_vm_paths = [
             home / "Library" / "Containers" / "com.docker.docker" / "Data" / "vms" / "0" / "data" / "Docker.raw",
-            home / "AppData" / "Local" / "Docker" / "wsl" / "data" / "ext4.vhdx",
+            local_app_data / "Docker" / "wsl" / "data" / "ext4.vhdx",
         ]
         for vm_disk in docker_vm_paths:
             if vm_disk.exists():
@@ -124,7 +125,7 @@ class ContainerScanner(BaseScanner):
         android_system_images = [
             home / "Library" / "Android" / "sdk" / "system-images",
             home / "Android" / "Sdk" / "system-images",
-            home / "AppData" / "Local" / "Android" / "Sdk" / "system-images",
+            local_app_data / "Android" / "Sdk" / "system-images",
         ]
         for img_path in android_system_images:
             if img_path.exists():

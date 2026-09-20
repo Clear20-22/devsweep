@@ -65,7 +65,7 @@ class SystemBrowserScanner(BaseScanner):
                     path=str(safari_cache),
                     size_bytes=combined_safari,
                     description="Safari temporary website asset and render caches.",
-                    cleanup_command="Clear via Safari > Settings > Privacy > Manage Website Data, or empty cache folders"
+                    cleanup_command="# Clear via Safari > Settings > Privacy > Manage Website Data, or empty cache folders"
                 ))
 
         # Arc Service Workers

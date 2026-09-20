@@ -20,7 +20,7 @@ def generate_markdown_report(report: ScanReport, output_path: Path):
         "",
         "| Tier | Reclaimable Space | Impact & Description |",
         "| :--- | :---: | :--- |",
-        f"| 🟢 **Zero Risk** | **{format_bytes(report.zero_risk_bytes)}** | Dead orphans, installer packages, update dumps. 100% safe. |",
+        f"| 🟢 **Low Risk** | **{format_bytes(report.zero_risk_bytes)}** | Dead orphans, installer packages, update dumps. Verify paths first. |",
         f"| 🟡 **Safe Caches** | **{format_bytes(report.safe_cache_bytes)}** | Dev toolchain, compiler, and browser caches. Auto-rebuilds on demand. |",
         f"| 🔵 **Requires Review** | **{format_bytes(report.review_required_bytes)}** | Project virtualenvs, Docker VMs, or duplicate app installations. |",
         "",

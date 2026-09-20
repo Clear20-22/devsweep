@@ -28,10 +28,8 @@ class PackageManagerScanner(BaseScanner):
         # -------------------------------------------------------------
         # 1. Python Toolchains (pip, uv, poetry)
         # -------------------------------------------------------------
-        pip_caches = [
-            local_cache / "pip",
-            home / ".cache" / "pip",
-        ]
+        pip_caches = ([local_cache / "pip" / "Cache", home / "AppData" / "Roaming" / "pip" / "Cache"]
+                      if is_windows() else [local_cache / "pip", home / ".cache" / "pip"])
         for p in pip_caches:
             if p.exists():
                 sz = get_dir_size(p)
@@ -48,7 +46,7 @@ class PackageManagerScanner(BaseScanner):
                     ))
                 break
 
-        uv_cache = local_cache / "uv" if is_macos() else home / ".cache" / "uv"
+        uv_cache = local_cache / "uv" / "cache" if is_windows() else (local_cache / "uv" if is_macos() else home / ".cache" / "uv")
         if uv_cache.exists():
             sz = get_dir_size(uv_cache)
             if sz > 20 * 1024 * 1024:
@@ -63,7 +61,7 @@ class PackageManagerScanner(BaseScanner):
                     cleanup_command="uv cache clean"
                 ))
 
-        poetry_cache = local_cache / "pypoetry" if is_macos() else home / ".cache" / "pypoetry"
+        poetry_cache = local_cache / "pypoetry" / "Cache" if is_windows() else (local_cache / "pypoetry" if is_macos() else home / ".cache" / "pypoetry")
         if poetry_cache.exists():
             sz = get_dir_size(poetry_cache)
             if sz > 20 * 1024 * 1024:
@@ -112,7 +110,7 @@ class PackageManagerScanner(BaseScanner):
                     cleanup_command=f'rm -rf "{npx_cache}"/*'
                 ))
 
-        yarn_cache = local_cache / "Yarn" if is_macos() else home / ".cache" / "yarn"
+        yarn_cache = local_cache / "Yarn" / "Cache" if is_windows() else (local_cache / "Yarn" if is_macos() else home / ".cache" / "yarn")
         if yarn_cache.exists():
             sz = get_dir_size(yarn_cache)
             if sz > 50 * 1024 * 1024:
@@ -230,7 +228,7 @@ class PackageManagerScanner(BaseScanner):
         # -------------------------------------------------------------
         # 5. Go Language (Go Build & Mod Cache)
         # -------------------------------------------------------------
-        go_cache = local_cache / "go-build" if is_macos() else home / ".cache" / "go-build"
+        go_cache = local_cache / "go-build" if (is_macos() or is_windows()) else home / ".cache" / "go-build"
         if go_cache.exists():
             sz = get_dir_size(go_cache)
             if sz > 50 * 1024 * 1024:

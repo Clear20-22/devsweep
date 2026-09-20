@@ -1,16 +1,14 @@
 """CLI interface for devsweep developer bloat auditor."""
 
 import argparse
-import os
 import platform
-import sys
 import time
 from pathlib import Path
 from typing import List
 
 from devsweep import __version__
 from devsweep.core.models import Finding, ScanReport
-from devsweep.core.utils import get_disk_usage, get_os
+from devsweep.core.utils import get_disk_usage, redact_report
 from devsweep.modules.ai_ml import AIMLScanner
 from devsweep.modules.containers import ContainerScanner
 from devsweep.modules.ides import IDEScanner
@@ -74,6 +72,12 @@ def main():
         help="Hide recommended cleanup commands in terminal output.",
     )
 
+    parser.add_argument(
+        "--redact",
+        action="store_true",
+        help="Redact the hostname and home-directory path from terminal, JSON, and Markdown reports. Cleanup scripts retain local paths.",
+    )
+
     args = parser.parse_args()
 
     start_time = time.time()
@@ -93,13 +97,15 @@ def main():
 
     # Execute non-destructive scans
     all_findings: List[Finding] = []
+    scan_errors = []
     for scanner in scanners:
         try:
             findings = scanner.scan()
             all_findings.extend(findings)
-        except Exception as e:
-            # Continue running other scanners if one encounters an OS-specific permission or path glitch
-            pass
+        except Exception as exc:
+            # Continue after a permission or platform-specific issue, but make a
+            # partial scan visible to the person running it.
+            scan_errors.append(f"{scanner.name}: {exc}")
 
     scan_duration = time.time() - start_time
     total_disk, used_disk, free_disk = get_disk_usage()
@@ -114,16 +120,22 @@ def main():
     )
 
     # 1. Print terminal summary
-    print_terminal_report(report, show_commands=not args.no_commands)
+    output_report = redact_report(report) if args.redact else report
+    print_terminal_report(output_report, show_commands=not args.no_commands)
+
+    if scan_errors:
+        print("\nWarning: some optional scanners could not complete:")
+        for error in scan_errors:
+            print(f"  - {error}")
 
     # 2. Export JSON if requested
     if args.json:
-        generate_json_report(report, args.json)
+        generate_json_report(output_report, args.json)
         print(f"\n📄 JSON report saved to: {args.json.resolve()}")
 
     # 3. Export Markdown if requested
     if args.markdown:
-        generate_markdown_report(report, args.markdown)
+        generate_markdown_report(output_report, args.markdown)
         print(f"\n📝 Markdown report saved to: {args.markdown.resolve()}")
 
     # 4. Generate Cleanup Script if requested

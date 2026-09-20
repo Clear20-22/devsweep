@@ -1,8 +1,18 @@
-"""Generator for safe, interactive cleanup scripts."""
+"""Generator for opt-in, interactive cleanup scripts."""
 
 from pathlib import Path
 from devsweep.core.models import SafetyLevel, ScanReport
 from devsweep.core.utils import format_bytes, is_windows
+
+
+def _posix_echo(value: str) -> str:
+    """Quote filesystem-derived labels for a POSIX shell echo."""
+    return "'" + value.replace("'", "'\\\"'\\\"'") + "'"
+
+
+def _powershell_string(value: str) -> str:
+    """Quote a value for a single-quoted PowerShell string literal."""
+    return "'" + value.replace("'", "''") + "'"
 
 
 def generate_cleanup_script(report: ScanReport, output_path: Path):
@@ -36,7 +46,7 @@ def _generate_posix_script(report: ScanReport, output_path: Path):
     zero_risk = [f for f in report.findings if f.safety == SafetyLevel.ZERO_RISK and f.cleanup_command and not f.cleanup_command.startswith("#")]
     if zero_risk:
         for f in zero_risk:
-            lines.append(f'  echo "Cleaning: {f.title} ({f.formatted_size})..."\n  {f.cleanup_command} || true')
+            lines.append(f"  echo {_posix_echo('Cleaning: ' + f.title + ' (' + f.formatted_size + ')...')}\n  {f.cleanup_command} || true")
     else:
         lines.append('  echo "No Tier 1 items to clean."')
 
@@ -54,7 +64,7 @@ def _generate_posix_script(report: ScanReport, output_path: Path):
     safe_cache = [f for f in report.findings if f.safety == SafetyLevel.SAFE_CACHE and f.cleanup_command and not f.cleanup_command.startswith("#")]
     if safe_cache:
         for f in safe_cache:
-            lines.append(f'  echo "Cleaning: {f.title} ({f.formatted_size})..."\n  {f.cleanup_command} || true')
+            lines.append(f"  echo {_posix_echo('Cleaning: ' + f.title + ' (' + f.formatted_size + ')...')}\n  {f.cleanup_command} || true")
     else:
         lines.append('  echo "No Tier 2 items to clean."')
 
@@ -69,14 +79,29 @@ def _generate_posix_script(report: ScanReport, output_path: Path):
 
 
 def _generate_windows_batch(report: ScanReport, output_path: Path):
+    """Generate a usable PowerShell script (the supplied suffix is preserved)."""
     lines = [
-        "@echo off",
-        "rem devsweep Windows Cleanup Batch Script",
-        "echo =====================================================",
-        "echo devsweep Interactive Cleanup",
-        f"echo Total Reclaimable: {format_bytes(report.total_reclaimable_bytes)}",
-        "echo =====================================================",
-        "pause",
+        "# devsweep generated PowerShell cleanup script",
+        "# It excludes all REVIEW findings. Inspect commands before running.",
+        "$ErrorActionPreference = 'Continue'",
+        f"Write-Host {_powershell_string('devsweep cleanup — potential reclaim: ' + format_bytes(report.total_reclaimable_bytes))}",
     ]
-    # Add windows batch logic
+    for label, safety, size in (
+        ("Tier 1 (low-risk cleanup)", SafetyLevel.ZERO_RISK, report.zero_risk_bytes),
+        ("Tier 2 (rebuildable caches)", SafetyLevel.SAFE_CACHE, report.safe_cache_bytes),
+    ):
+        candidates = [f for f in report.findings if f.safety == safety and f.cleanup_command
+                      and not f.cleanup_command.startswith("#") and "rm -rf" not in f.cleanup_command
+                      and " && " not in f.cleanup_command]
+        lines.extend(["", f"# {label}; potential reclaim: {format_bytes(size)}",
+                      f"$answer = Read-Host {_powershell_string('Run ' + label + '? [y/N]')}",
+                      "if ($answer -match '^[Yy]$') {"])
+        if candidates:
+            for finding in candidates:
+                lines.append(f"  Write-Host {_powershell_string('Cleaning: ' + finding.title + ' (' + finding.formatted_size + ')...')}")
+                lines.append(f"  & {finding.cleanup_command}")
+        else:
+            lines.append("  Write-Host 'No Windows-compatible automated commands were found in this tier.'")
+        lines.append("}")
+    lines.extend(["", "Write-Host 'Cleanup sequence completed.'"])
     output_path.write_text("\n".join(lines), encoding="utf-8")

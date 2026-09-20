@@ -1,4 +1,4 @@
-"""IDE and editor bloat scanner (VS Code, Cursor, Windsurf, JetBrains, Antigravity)."""
+"""IDE and editor bloat scanner (VS Code, Cursor, Windsurf, JetBrains)."""
 
 import json
 import os
@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple
 
 from devsweep.core.models import Category, Finding, SafetyLevel
 from devsweep.core.scanner import BaseScanner
-from devsweep.core.utils import get_app_data_dir, get_dir_size, get_home_dir, get_local_cache_dir, is_macos
+from devsweep.core.utils import get_app_data_dir, get_dir_size, get_home_dir, get_local_cache_dir
 
 
 class IDEScanner(BaseScanner):
@@ -147,30 +147,6 @@ class IDEScanner(BaseScanner):
                         description="IntelliJ / PyCharm / WebStorm system indices and compilation caches.",
                         cleanup_command=f"rm -rf \"{jb_dir}\"/*"
                     ))
-
-        # 6. Antigravity Dual Installation / Old Configs Check
-        if is_macos():
-            antigravity_app = Path("/Applications/Antigravity.app")
-            antigravity_ide_app = Path("/Applications/Antigravity IDE.app")
-            legacy_ide_config = home / ".antigravity-ide"
-
-            if antigravity_app.exists() and antigravity_ide_app.exists():
-                ide_app_size = get_dir_size(antigravity_ide_app)
-                config_size = get_dir_size(legacy_ide_config) if legacy_ide_config.exists() else 0
-                total_dup_size = ide_app_size + config_size
-                findings.append(Finding(
-                    id="antigravity_dual_installation",
-                    title="Antigravity Duplicate Older IDE Version",
-                    category=Category.IDES_EDITORS,
-                    safety=SafetyLevel.REQUIRES_REVIEW,
-                    path=str(antigravity_ide_app),
-                    size_bytes=total_dup_size,
-                    description=(
-                        "Found older Antigravity IDE.app installed alongside the updated Antigravity.app. "
-                        "Removing the older bundle and legacy ~/.antigravity-ide frees substantial space."
-                    ),
-                    cleanup_command=f'rm -rf "{antigravity_ide_app}" "{legacy_ide_config}"'
-                ))
 
         return findings
 

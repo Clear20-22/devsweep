@@ -78,9 +78,9 @@ def _print_rich_report(report: ScanReport, show_commands: bool):
     summary_table.add_column("Impact Description", style="dim")
 
     summary_table.add_row(
-        "🟢 Zero Risk (Dead data, orphans, installers)",
+        "🟢 Low Risk (Dead data, orphans, installers)",
         format_bytes(report.zero_risk_bytes),
-        "100% safe to delete immediately. No impact on active work."
+        "Verify the path and close the related app before deleting."
     )
     summary_table.add_row(
         "🟡 Safe Caches (Dev/build/browser caches)",
@@ -102,7 +102,7 @@ def _print_rich_report(report: ScanReport, show_commands: bool):
         # Zero risk commands
         zero_risk = [f for f in sorted_findings if f.safety == SafetyLevel.ZERO_RISK and f.cleanup_command and not f.cleanup_command.startswith("#")]
         if zero_risk:
-            cmd_panel.append("# Tier 1: 100% Safe Instant Purge (Zero Risk)\n", style="bold green")
+            cmd_panel.append("# Tier 1: Low-Risk Cleanup (verify paths first)\n", style="bold green")
             for f in zero_risk:
                 cmd_panel.append(f"{f.cleanup_command}\n", style="green")
             cmd_panel.append("\n")

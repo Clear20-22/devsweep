@@ -4,8 +4,11 @@ import os
 import platform
 import shutil
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import Optional, Tuple
+
+from devsweep.core.models import Finding, ScanReport
 
 
 def get_os() -> str:
@@ -124,3 +127,26 @@ def format_bytes(size_bytes: int) -> str:
     elif size_bytes >= 1024:
         return f"{size_bytes / 1024:.1f} KB"
     return f"{size_bytes} B"
+
+
+def redact_report(report: ScanReport) -> ScanReport:
+    """Return a report suitable for sharing without a host name or home path.
+
+    The original report is left unchanged so a generated cleanup script always
+    retains usable local paths.  This only affects display and exported reports.
+    """
+    home_text = str(get_home_dir())
+
+    def redact(value: str) -> str:
+        return value.replace(home_text, "~")
+
+    findings = [
+        replace(
+            finding,
+            path=redact(finding.path),
+            cleanup_command=redact(finding.cleanup_command),
+            metadata={key: redact(value) for key, value in finding.metadata.items()},
+        )
+        for finding in report.findings
+    ]
+    return replace(report, hostname="<redacted>", findings=findings)

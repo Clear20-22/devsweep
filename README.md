@@ -1,7 +1,7 @@
 # 🧹 devsweep
 
 > **The Non-Destructive Developer Bloat & Storage Auditor.**  
-> Find every gigabyte of hidden developer bloat across your workstation (**macOS, Linux, Windows**) with **0% risk of data loss**.
+> Find sizeable developer caches and storage candidates across your workstation (**macOS, Linux, Windows**) without modifying files during an audit.
 
 ---
 
@@ -12,7 +12,7 @@ Most system cleaners are either too generic or dangerously aggressive:
 * Or they delete everything indiscriminately, breaking virtual environments and logging you out of accounts.
 
 **devsweep is different:**
-* 🛡️ **100% Read-Only & Non-Destructive**: It never deletes, renames, or touches your files. It only audits, measures, and outputs clear, actionable recommendations.
+* 🛡️ **Read-Only by Default**: It never deletes, renames, or touches your files while auditing. Cleanup is a separately generated, interactive, opt-in script.
 * 🧠 **Developer-First Intelligence**:
   * Identifies **orphaned IDE workspaces** (VS Code, Cursor, Windsurf) that point to deleted repositories.
   * Correctly computes **sparse virtual disk allocations** (Docker `Docker.raw`, Colima, WSL2 `ext4.vhdx`) using actual allocated blocks instead of deceptive logical sizes.
@@ -75,7 +75,7 @@ All findings are categorized into 3 distinct safety tiers:
 
 1. 🟢 **Zero Risk**:
    * Dead orphaned databases (pointing to deleted folders), leftover updater installers, temporary build dumps.
-   * **100% safe to delete immediately.**
+   * Usually safe to delete, but still verify the path and ensure the related app is closed.
 2. 🟡 **Safe Caches**:
    * Dev toolchain download caches, build artifacts, browser HTTP asset caches.
    * **Safe to clear.** Any cache will rebuild or redownload automatically if a script or project requests it in the future.
@@ -94,8 +94,15 @@ python3 devsweep.py --markdown audit-report.md
 # Export audit results to machine-readable JSON
 python3 devsweep.py --json audit-report.json
 
+# Create a report you can share publicly: hides hostname and replaces your home path with ~
+python3 devsweep.py --redact --markdown shared-audit-report.md
+
 # Generate an interactive, commented cleanup script that prompts before running each tier
 python3 devsweep.py --generate-script cleanup.sh
+
+# Windows: generate a PowerShell script, then run it from PowerShell
+py devsweep.py --generate-script cleanup.ps1
+.\cleanup.ps1
 
 # Scan specific custom project directories
 python3 devsweep.py --scan-projects ~/Work ~/Personal/Apps
