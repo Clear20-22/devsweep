@@ -29,7 +29,7 @@ Most system cleaners are either too generic or dangerously aggressive:
 Clone and run with standard Python 3:
 
 ```bash
-git clone https://github.com/jubayerahmedsojib/devsweep.git
+git clone https://github.com/your-username/devsweep.git
 cd devsweep
 python3 devsweep.py
 ```
@@ -67,6 +67,9 @@ python devsweep.py
 | **Project Repositories** | Scans workspaces (`~/Documents/GitHub`, `~/Projects`, etc.) for dormant `.venv`, bulky `node_modules`, `.next` build caches, Rust `target/`, and loose uncompacted `.git` objects. | 🟡 Safe Cache / 🔵 Review |
 | **System & Browsers** | Arc, Safari, Chrome, Firefox, Brave HTTP asset caches, Telegram updater leftovers (`PersistentDownloads`), `.net/Updates` build dumps, system crash reports, and Trash. | 🟢 Zero Risk / 🟡 Safe Cache |
 
+> [!NOTE]
+> See [`report.example.md`](report.example.md) for a sample scan output with all paths anonymised.
+
 ---
 
 ## 📊 Safety Tiers Explained
@@ -94,7 +97,9 @@ python3 devsweep.py --markdown audit-report.md
 # Export audit results to machine-readable JSON
 python3 devsweep.py --json audit-report.json
 
-# Create a report you can share publicly: hides hostname and replaces your home path with ~
+# Create a report safe to share publicly:
+# --redact hides your real hostname and replaces your home path (~) in output.
+# NEVER commit report.json or report.md without --redact (see .gitignore).
 python3 devsweep.py --redact --markdown shared-audit-report.md
 
 # Generate an interactive, commented cleanup script that prompts before running each tier
@@ -128,6 +133,14 @@ python3 devsweep.py --no-commands
 
 Contributions are welcome! If there is a new developer tool, language cache, or framework you would like `devsweep` to audit, feel free to submit a PR or open an issue.
 
+📖 **Full guide: [CONTRIBUTING.md](CONTRIBUTING.md)**
+
+**Before submitting:**
+- Every scanner module in `devsweep/modules/` should have a module-level docstring, section comments for each cache inspected, and a clear explanation of the safety tier chosen.
+- Never commit personal scan output files (`report.json`, `report.md`). The `.gitignore` blocks these, but double-check with `git status` before pushing.
+- See [`report.example.md`](report.example.md) for what a fully anonymised report looks like.
+
+**Steps:**
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/new-scanner`)
 3. Commit your changes (`git commit -m 'Add scanner for Zig / Bun'`)

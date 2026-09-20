@@ -1,4 +1,31 @@
-"""CLI interface for devsweep developer bloat auditor."""
+"""
+devsweep.cli
+============
+
+Command-line entry point for the devsweep storage auditor.
+
+This module owns the argument parser, orchestrates the scanner pipeline, and
+routes the final ``ScanReport`` to whichever output formats the user requested.
+
+Pipeline overview
+-----------------
+::
+
+    argparse
+       ↓
+    [IDEScanner, PackageManagerScanner, ContainerScanner,
+     AIMLScanner, SystemBrowserScanner, ProjectScanner?]
+       ↓  each returns List[Finding]
+    ScanReport (assembled from all findings + disk/OS metadata)
+       ↓
+    ┌── terminal output   (always)
+    ├── --json FILE        (optional)
+    ├── --markdown FILE    (optional)
+    └── --generate-script FILE  (optional)
+
+All scanner calls are wrapped in individual try/except blocks so one broken
+scanner (e.g. a permission issue) never prevents the rest from running.
+"""
 
 import argparse
 import platform
@@ -22,6 +49,15 @@ from devsweep.reporters.terminal import print_terminal_report
 
 
 def main():
+    """Parse CLI arguments, run all scanner modules, and produce requested reports.
+
+    This function is the entry point registered in ``pyproject.toml`` under
+    ``[project.scripts]`` and also called directly by ``devsweep.py`` when
+    the package is run as a script.
+    """
+    # ------------------------------------------------------------------
+    # Argument parser setup
+    # ------------------------------------------------------------------
     parser = argparse.ArgumentParser(
         prog="devsweep",
         description="🧹 devsweep: Non-destructive developer bloat and storage auditor.",
@@ -36,13 +72,19 @@ def main():
         "--scan-projects",
         nargs="*",
         metavar="PATH",
-        help="Additional project directories to scan for virtualenvs, node_modules, and build caches.",
+        help=(
+            "Additional project directories to scan for virtualenvs, "
+            "node_modules, and build caches.  Accepts multiple paths."
+        ),
     )
 
     parser.add_argument(
         "--skip-projects",
         action="store_true",
-        help="Skip scanning project directories (focus only on global toolchains, IDEs, and system caches).",
+        help=(
+            "Skip scanning project directories entirely.  Useful when you only "
+            "want to audit global toolchain caches and system-level items."
+        ),
     )
 
     parser.add_argument(
@@ -63,7 +105,10 @@ def main():
         "--generate-script",
         type=Path,
         metavar="FILE",
-        help="Generate an interactive, commented cleanup shell script.",
+        help=(
+            "Generate an interactive, commented cleanup shell script "
+            "(POSIX .sh or PowerShell .ps1 on Windows)."
+        ),
     )
 
     parser.add_argument(
@@ -75,41 +120,64 @@ def main():
     parser.add_argument(
         "--redact",
         action="store_true",
-        help="Redact the hostname and home-directory path from terminal, JSON, and Markdown reports. Cleanup scripts retain local paths.",
+        help=(
+            "Replace your hostname and home-directory path with safe placeholders "
+            "in terminal, JSON, and Markdown output.  "
+            "Cleanup scripts always retain local paths so they remain runnable."
+        ),
     )
 
     args = parser.parse_args()
 
+    # ------------------------------------------------------------------
+    # Build the scanner list
+    # The order here determines the order sections appear in the terminal
+    # table (sorted by size within each reporter, but categories follow this).
+    # ------------------------------------------------------------------
     start_time = time.time()
 
-    # Initialize scanners
     scanners = [
-        IDEScanner(),
-        PackageManagerScanner(),
-        ContainerScanner(),
-        AIMLScanner(),
-        SystemBrowserScanner(),
+        IDEScanner(),            # VS Code, Cursor, Windsurf, JetBrains
+        PackageManagerScanner(), # pip, npm, yarn, cargo, gradle, brew, etc.
+        ContainerScanner(),      # Docker, Colima, Android AVDs, Xcode, UTM
+        AIMLScanner(),           # HuggingFace, PyTorch Hub, Ollama, TF Hub
+        SystemBrowserScanner(),  # Browser caches, updater leftovers, crash logs
     ]
 
+    # ProjectScanner is opt-out: skip it only if --skip-projects is set.
     if not args.skip_projects:
-        custom_roots = [Path(p).expanduser().resolve() for p in args.scan_projects] if args.scan_projects else None
+        # If the user provided explicit roots via --scan-projects, resolve
+        # them to absolute Paths; otherwise ProjectScanner uses its defaults.
+        custom_roots = (
+            [Path(p).expanduser().resolve() for p in args.scan_projects]
+            if args.scan_projects
+            else None
+        )
         scanners.append(ProjectScanner(search_roots=custom_roots))
 
-    # Execute non-destructive scans
+    # ------------------------------------------------------------------
+    # Execute all scanners — failures are non-fatal
+    # ------------------------------------------------------------------
     all_findings: List[Finding] = []
     scan_errors = []
+
     for scanner in scanners:
         try:
             findings = scanner.scan()
             all_findings.extend(findings)
         except Exception as exc:
-            # Continue after a permission or platform-specific issue, but make a
-            # partial scan visible to the person running it.
+            # A scanner may fail due to missing permissions or platform-specific
+            # quirks.  We record the error and continue with the remaining
+            # scanners so users get a partial report rather than a crash.
             scan_errors.append(f"{scanner.name}: {exc}")
 
     scan_duration = time.time() - start_time
+
+    # Query the mount that contains the home directory for an overall
+    # free-space figure to display alongside the findings.
     total_disk, used_disk, free_disk = get_disk_usage()
 
+    # Assemble the report object that all reporters will consume.
     report = ScanReport(
         system_os=platform.platform(),
         hostname=platform.node(),
@@ -119,26 +187,34 @@ def main():
         findings=all_findings,
     )
 
-    # 1. Print terminal summary
+    # ------------------------------------------------------------------
+    # Output routing
+    # ``output_report`` may be a redacted copy; ``report`` keeps real paths
+    # for cleanup script generation (scripts must remain runnable locally).
+    # ------------------------------------------------------------------
+
+    # 1. Always print to terminal (redacted if requested)
     output_report = redact_report(report) if args.redact else report
     print_terminal_report(output_report, show_commands=not args.no_commands)
 
+    # Print any non-fatal scanner errors after the main report.
     if scan_errors:
         print("\nWarning: some optional scanners could not complete:")
         for error in scan_errors:
             print(f"  - {error}")
 
-    # 2. Export JSON if requested
+    # 2. Export JSON if --json was provided
     if args.json:
         generate_json_report(output_report, args.json)
         print(f"\n📄 JSON report saved to: {args.json.resolve()}")
 
-    # 3. Export Markdown if requested
+    # 3. Export Markdown if --markdown was provided
     if args.markdown:
         generate_markdown_report(output_report, args.markdown)
         print(f"\n📝 Markdown report saved to: {args.markdown.resolve()}")
 
-    # 4. Generate Cleanup Script if requested
+    # 4. Generate an interactive cleanup shell script if --generate-script was provided
+    #    Note: we pass the unredacted `report` so local paths are preserved.
     if args.generate_script:
         generate_cleanup_script(report, args.generate_script)
         print(f"\n🚀 Interactive cleanup script generated: {args.generate_script.resolve()}")

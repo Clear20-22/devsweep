@@ -1,4 +1,4 @@
-# Python
+# Python bytecode and build artifacts
 __pycache__/
 *.py[cod]
 *$py.class
@@ -20,25 +20,41 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
+# Virtual environments — never commit installed packages
 .venv/
 venv/
 ENV/
 env/
 
-# IDE
+# IDE project files — keep the repo editor-agnostic
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# OS
+# macOS / Windows filesystem noise
 .DS_Store
 Thumbs.db
 
-# Generated reports & outputs
+# -----------------------------------------------------------------------
+# Generated scan output — NEVER commit these.
+# They contain your real hostname and home-directory paths.
+# Use `python3 devsweep.py --redact --markdown report.md` to make a
+# shareable version, and share it manually — don't commit it.
+# -----------------------------------------------------------------------
+
+# Wildcard catch-all for any *.json / *.md outputs (README.md is kept)
 *.json
 *.md
 !README.md
+!CONTRIBUTING.md
+!report.example.md
+# Explicit names in case the wildcards are bypassed with `git add -f`
+report.json
+report.md
+
+# Generated interactive cleanup scripts (contain local absolute paths)
+*.sh
+*.ps1
 devsweep_cleanup.sh
 devsweep_cleanup.bat
