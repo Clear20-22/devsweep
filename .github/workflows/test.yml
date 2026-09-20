@@ -87,12 +87,10 @@ jobs:
         if: runner.os == 'Windows'
         run: |
           python devsweep.py --skip-projects --generate-script ci-cleanup.ps1
-          pwsh -NoProfile -Command "
-            \$errors = \$null
-            [System.Management.Automation.Language.Parser]::ParseFile('ci-cleanup.ps1', [ref]\$null, [ref]\$errors)
-            if (\$errors) {
-              Write-Error ('PowerShell syntax error: ' + (\$errors | Out-String))
-              exit 1
-            }
-            Write-Host 'ci-cleanup.ps1 syntax successfully verified!'
-          "
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile('ci-cleanup.ps1', [ref]$null, [ref]$parseErrors)
+          if ($parseErrors) {
+            Write-Error ("PowerShell syntax error: " + ($parseErrors | Out-String))
+            exit 1
+          }
+          Write-Host "ci-cleanup.ps1 syntax successfully verified!"
