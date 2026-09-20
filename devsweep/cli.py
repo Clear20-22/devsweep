@@ -57,6 +57,19 @@ def main():
     ``[project.scripts]`` and also called directly by ``devsweep.py`` when
     the package is run as a script.
     """
+    # Ensure Windows consoles don't crash on emoji characters (e.g. 🧹) under legacy cp1252/cp437
+    if sys.platform.startswith("win"):
+        if hasattr(sys.stdout, "reconfigure"):
+            try:
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+        if hasattr(sys.stderr, "reconfigure"):
+            try:
+                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
     # ------------------------------------------------------------------
     # Argument parser setup
     # ------------------------------------------------------------------
