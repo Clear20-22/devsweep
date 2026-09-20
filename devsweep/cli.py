@@ -29,6 +29,7 @@ scanner (e.g. a permission issue) never prevents the rest from running.
 
 import argparse
 import platform
+import sys
 import time
 from pathlib import Path
 from typing import List
