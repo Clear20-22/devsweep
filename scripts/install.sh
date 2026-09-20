@@ -86,7 +86,11 @@ fi
 
 # Activate the venv for the rest of this script.
 # shellcheck source=/dev/null
-source .venv/bin/activate
+if [ -f ".venv/Scripts/activate" ]; then
+    source .venv/Scripts/activate
+else
+    source .venv/bin/activate
+fi
 
 # ---------------------------------------------------------------------------
 # Step 3 — Upgrade pip silently

@@ -30,12 +30,20 @@ git clone https://github.com/your-username/devsweep.git
 cd devsweep
 
 # 2. Run immediately (auto-configures environment on first run)
+# macOS / Linux / Git Bash:
 ./ds
+
+# Windows PowerShell:
+.\ds
+
+# Windows Command Prompt:
+ds
 ```
 
 > [!TIP]
-> You can also run `bash scripts/install.sh` if you prefer explicit setup first, or run `bash scripts/run.sh`.
-> Run `./ds alias` to register `devsweep` and `ds` globally in your terminal shell so you can run them from any folder.
+> * **macOS & Linux**: Run `./ds` or `bash scripts/run.sh`.
+> * **Windows**: Run `.\ds` in PowerShell or `ds` in CMD (or `./ds` in Git Bash/WSL).
+> * Run `./ds alias` on Unix shells to register `devsweep` and `ds` globally.
 
 ---
 

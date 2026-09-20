@@ -24,7 +24,18 @@ set -e
 # ---------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-VENV_PYTHON="$ROOT_DIR/.venv/bin/python"
+
+# Resolve Python & pip inside .venv (handles both Unix and Windows layout)
+if [ -f "$ROOT_DIR/.venv/Scripts/python.exe" ]; then
+    VENV_PYTHON="$ROOT_DIR/.venv/Scripts/python.exe"
+    VENV_PIP="$ROOT_DIR/.venv/Scripts/pip.exe"
+elif [ -f "$ROOT_DIR/.venv/Scripts/python" ]; then
+    VENV_PYTHON="$ROOT_DIR/.venv/Scripts/python"
+    VENV_PIP="$ROOT_DIR/.venv/Scripts/pip"
+else
+    VENV_PYTHON="$ROOT_DIR/.venv/bin/python"
+    VENV_PIP="$ROOT_DIR/.venv/bin/pip"
+fi
 
 # ---------------------------------------------------------------------------
 # Terminal Dimensions & Responsiveness
@@ -92,11 +103,18 @@ bootstrap_setup() {
     c "$CYAN" "  ▶ Creating virtual environment (.venv)..."
     "$py" -m venv "$ROOT_DIR/.venv"
 
+    local venv_pip="$ROOT_DIR/.venv/bin/pip"
+    if [ -f "$ROOT_DIR/.venv/Scripts/pip.exe" ]; then
+        venv_pip="$ROOT_DIR/.venv/Scripts/pip.exe"
+    elif [ -f "$ROOT_DIR/.venv/Scripts/pip" ]; then
+        venv_pip="$ROOT_DIR/.venv/Scripts/pip"
+    fi
+
     c "$CYAN" "  ▶ Installing dependencies (rich for formatted output)..."
     if [ -f "$ROOT_DIR/requirements.txt" ]; then
-        "$ROOT_DIR/.venv/bin/pip" install -r "$ROOT_DIR/requirements.txt" --quiet 2>/dev/null || true
+        "$venv_pip" install -r "$ROOT_DIR/requirements.txt" --quiet 2>/dev/null || true
     else
-        "$ROOT_DIR/.venv/bin/pip" install "rich>=13.0.0" --quiet 2>/dev/null || true
+        "$venv_pip" install "rich>=13.0.0" --quiet 2>/dev/null || true
     fi
 
     chmod +x "$ROOT_DIR/ds" "$ROOT_DIR/scripts/run.sh" "$ROOT_DIR/scripts/install.sh" 2>/dev/null || true

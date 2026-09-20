@@ -56,7 +56,10 @@ report.md
 # Generated interactive cleanup scripts (contain local absolute paths)
 *.sh
 *.ps1
-# Whitelist repository runner and installer scripts in scripts/
+# Whitelist repository runner and installer scripts
 !scripts/*.sh
+!ds.ps1
+cleanup.ps1
+cleanup.sh
 devsweep_cleanup.sh
 devsweep_cleanup.bat
