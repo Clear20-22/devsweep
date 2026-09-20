@@ -94,7 +94,8 @@ class ReporterTests(unittest.TestCase):
 
         # Redacted report must hide the sensitive data.
         self.assertEqual(redacted.hostname, "<redacted>")
-        self.assertEqual(redacted.findings[0].path, "~/private-cache")
+        expected_path = str(Path("~") / "private-cache")
+        self.assertEqual(redacted.findings[0].path, expected_path)
         self.assertNotIn(str(Path.home()), redacted.findings[0].cleanup_command)
 
         # The original report must be unchanged (redact_report must not mutate).
@@ -113,13 +114,11 @@ class ReporterTests(unittest.TestCase):
 
     def test_posix_script_includes_review_items_with_individual_prompts(self):
         """POSIX script must include Tier 3 REQUIRES_REVIEW items, each with its own prompt."""
-        with (
-            tempfile.TemporaryDirectory() as directory,
-            patch("devsweep.reporters.script_gen.is_windows", return_value=False),
-        ):
-            output = Path(directory) / "cleanup.sh"
-            generate_cleanup_script(sample_report(), output)
-            script = output.read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("devsweep.reporters.script_gen.is_windows", return_value=False):
+                output = Path(directory) / "cleanup.sh"
+                generate_cleanup_script(sample_report(), output)
+                script = output.read_text(encoding="utf-8")
 
         # The label "Bob's cache" must be safely quoted in the echo call.
         self.assertIn("Bob'\\\"'\\\"'s cache", script)
@@ -133,13 +132,11 @@ class ReporterTests(unittest.TestCase):
 
     def test_windows_script_includes_review_items_with_individual_prompts(self):
         """PowerShell script must include Tier 3 REQUIRES_REVIEW items with individual prompts."""
-        with (
-            tempfile.TemporaryDirectory() as directory,
-            patch("devsweep.reporters.script_gen.is_windows", return_value=True),
-        ):
-            output = Path(directory) / "cleanup.ps1"
-            generate_cleanup_script(sample_report(), output)
-            script = output.read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as directory:
+            with patch("devsweep.reporters.script_gen.is_windows", return_value=True):
+                output = Path(directory) / "cleanup.ps1"
+                generate_cleanup_script(sample_report(), output)
+                script = output.read_text(encoding="utf-8")
 
         # PowerShell scripts must use $ErrorActionPreference (PS-specific).
         self.assertIn("$ErrorActionPreference", script)

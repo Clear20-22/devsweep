@@ -59,11 +59,9 @@ class LanguageRuntimeScannerTests(unittest.TestCase):
             dummy_file.write_bytes(b"x" * 1024)
 
             scanner = LanguageRuntimeScanner()
-            with (
-                patch("devsweep.modules.language_runtimes.get_home_dir", return_value=home),
-                patch("devsweep.modules.language_runtimes.get_dir_size", return_value=60 * 1024 * 1024),
-            ):
-                findings = scanner.scan()
+            with patch("devsweep.modules.language_runtimes.get_home_dir", return_value=home):
+                with patch("devsweep.modules.language_runtimes.get_dir_size", return_value=60 * 1024 * 1024):
+                    findings = scanner.scan()
 
             bun_findings = [f for f in findings if f.id == "bun_install_cache"]
             self.assertEqual(len(bun_findings), 1)
@@ -78,11 +76,9 @@ class LanguageRuntimeScannerTests(unittest.TestCase):
             pub_cache.mkdir(parents=True)
 
             scanner = LanguageRuntimeScanner()
-            with (
-                patch("devsweep.modules.language_runtimes.get_home_dir", return_value=home),
-                patch("devsweep.modules.language_runtimes.get_dir_size", return_value=120 * 1024 * 1024),
-            ):
-                findings = scanner.scan()
+            with patch("devsweep.modules.language_runtimes.get_home_dir", return_value=home):
+                with patch("devsweep.modules.language_runtimes.get_dir_size", return_value=120 * 1024 * 1024):
+                    findings = scanner.scan()
 
             pub_findings = [f for f in findings if f.id == "dart_pub_cache"]
             self.assertEqual(len(pub_findings), 1)
@@ -100,11 +96,9 @@ class DataScienceScannerTests(unittest.TestCase):
             conda_pkgs.mkdir(parents=True)
 
             scanner = DataScienceScanner()
-            with (
-                patch("devsweep.modules.data_science.get_home_dir", return_value=home),
-                patch("devsweep.modules.data_science.get_dir_size", return_value=200 * 1024 * 1024),
-            ):
-                findings = scanner.scan()
+            with patch("devsweep.modules.data_science.get_home_dir", return_value=home):
+                with patch("devsweep.modules.data_science.get_dir_size", return_value=200 * 1024 * 1024):
+                    findings = scanner.scan()
 
             conda_findings = [f for f in findings if f.id == "conda_pkg_cache"]
             self.assertEqual(len(conda_findings), 1)
@@ -119,11 +113,9 @@ class DataScienceScannerTests(unittest.TestCase):
             jupyter_share.mkdir(parents=True)
 
             scanner = DataScienceScanner()
-            with (
-                patch("devsweep.modules.data_science.get_home_dir", return_value=home),
-                patch("devsweep.modules.data_science.get_dir_size", return_value=150 * 1024 * 1024),
-            ):
-                findings = scanner.scan()
+            with patch("devsweep.modules.data_science.get_home_dir", return_value=home):
+                with patch("devsweep.modules.data_science.get_dir_size", return_value=150 * 1024 * 1024):
+                    findings = scanner.scan()
 
             jupyter_findings = [f for f in findings if f.id == "jupyter_share"]
             self.assertEqual(len(jupyter_findings), 1)
