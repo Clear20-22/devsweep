@@ -58,11 +58,9 @@ def _posix_echo(value: str) -> str:
     string is a single quote itself, so we break the string and inject a
     double-quoted single quote:
 
-        ``'it''"'"'s a label'``  →  ``it's a label``
-
-    This approach works in POSIX sh, bash, dash, and zsh.
+        ``'it'\''s a label'``  →  ``it's a label``
     """
-    return "'" + value.replace("'", "'\\\"'\\\"'") + "'"
+    return "'" + value.replace("'", "'\\''") + "'"
 
 
 def _powershell_string(value: str) -> str:

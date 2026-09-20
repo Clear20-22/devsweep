@@ -63,3 +63,36 @@ jobs:
             exit 1
           fi
           echo "All report artifacts successfully verified!"
+
+      - name: Test launcher scripts (macOS & Linux)
+        if: runner.os != 'Windows'
+        run: |
+          chmod +x ./ds
+          ./ds help
+
+      - name: Test launcher scripts (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          pwsh ./ds.ps1 help
+          cmd /c ds.bat help
+
+      - name: Test cleanup script generation and syntax (macOS & Linux)
+        if: runner.os != 'Windows'
+        run: |
+          python devsweep.py --skip-projects --generate-script ci-cleanup.sh
+          bash -n ci-cleanup.sh
+          echo "ci-cleanup.sh syntax successfully verified!"
+
+      - name: Test cleanup script generation and syntax (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          python devsweep.py --skip-projects --generate-script ci-cleanup.ps1
+          pwsh -NoProfile -Command "
+            \$errors = \$null
+            [System.Management.Automation.Language.Parser]::ParseFile('ci-cleanup.ps1', [ref]\$null, [ref]\$errors)
+            if (\$errors) {
+              Write-Error ('PowerShell syntax error: ' + (\$errors | Out-String))
+              exit 1
+            }
+            Write-Host 'ci-cleanup.ps1 syntax successfully verified!'
+          "

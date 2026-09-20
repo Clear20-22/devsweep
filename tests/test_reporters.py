@@ -121,7 +121,7 @@ class ReporterTests(unittest.TestCase):
                 script = output.read_text(encoding="utf-8")
 
         # The label "Bob's cache" must be safely quoted in the echo call.
-        self.assertIn("Bob'\\\"'\\\"'s cache", script)
+        self.assertIn("Bob'\\''s cache", script)
         # The safe cache npm command must appear in the Tier 2 block.
         self.assertIn("npm cache clean --force", script)
         # The REQUIRES_REVIEW docker command must appear in Tier 3 (it is now included).
