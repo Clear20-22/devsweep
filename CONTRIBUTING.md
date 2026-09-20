@@ -20,7 +20,11 @@ Thank you for your interest in contributing! devsweep is designed to be **easy t
 
 ```
 devsweep/
+├── ds                       ← interactive launcher keyword (./ds)
 ├── devsweep.py              ← standalone entry point (python3 devsweep.py)
+├── scripts/
+│   ├── run.sh               ← terminal runner & dashboard (bash scripts/run.sh)
+│   └── install.sh           ← one-time setup script (bash scripts/install.sh)
 ├── devsweep/
 │   ├── __init__.py
 │   ├── cli.py               ← argument parser + scanner orchestration
@@ -31,7 +35,9 @@ devsweep/
 │   ├── modules/             ← ⭐ ADD NEW SCANNERS HERE
 │   │   ├── ai_ml.py
 │   │   ├── containers.py
+│   │   ├── data_science.py
 │   │   ├── ides.py
+│   │   ├── language_runtimes.py
 │   │   ├── package_managers.py
 │   │   ├── projects.py
 │   │   └── system_browsers.py
@@ -41,7 +47,8 @@ devsweep/
 │       ├── script_gen.py
 │       └── terminal.py
 └── tests/
-    └── test_reporters.py
+    ├── test_reporters.py
+    └── test_scanners.py
 ```
 
 ---

@@ -22,37 +22,42 @@ Most system cleaners are either too generic or dangerously aggressive:
 
 ---
 
-## 🚀 Quick Start
-
-### 1. Instant Run (No Installation Required)
-
-Clone and run with standard Python 3:
+## ⚡ Quick Start
 
 ```bash
+# 1. Clone the repository
 git clone https://github.com/your-username/devsweep.git
 cd devsweep
-python3 devsweep.py
+
+# 2. Run immediately (auto-configures environment on first run)
+./ds
 ```
 
-### 2. Enhanced Terminal Experience (with Rich UI)
+> [!TIP]
+> You can also run `bash scripts/install.sh` if you prefer explicit setup first, or run `bash scripts/run.sh`.
+> Run `./ds alias` to register `devsweep` and `ds` globally in your terminal shell so you can run them from any folder.
 
-Using `uv` (recommended):
+---
 
-```bash
-uv venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -r requirements.txt
-python devsweep.py
-```
+## 🖥️ Terminal Commands & Keywords
 
-Or using standard `pip`:
+| Command / Keyword | What it does |
+|---|---|
+| `./ds` *(or `bash scripts/run.sh`)* | Opens the **interactive terminal menu** |
+| `./ds help` | Shows instructions: **how to do, what to do, and commands** |
+| `./ds scan` | Quick scan — global caches & toolchains only (1–2 sec) |
+| `./ds full` | Full scan — includes project repositories |
+| `./ds full ~/Work` | Full scan with a custom project root path |
+| `./ds report` | Save an anonymised Markdown report → `audit-report.md` |
+| `./ds report my.md` | Save Markdown report to a custom filename |
+| `./ds json` | Save JSON report → `audit-report.json` |
+| `./ds script` | Generate an interactive, commented cleanup script → `cleanup.sh` |
+| `./ds clean` | Generate cleanup script **and** run it with step-by-step confirmation |
+| `./ds alias` | Add `devsweep` and `ds` global commands to your shell (`~/.zshrc` / `~/.bashrc`) |
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-python devsweep.py
-```
+> [!NOTE]
+> `./ds report` and `./ds json` automatically use `--redact` so usernames, home paths, and hostnames are safe to share.
+> Cleanup scripts retain local paths so generated commands remain functional when you choose to execute them.
 
 ---
 
@@ -62,6 +67,8 @@ python devsweep.py
 | :--- | :--- | :---: |
 | **IDEs & Editors** | VS Code, Cursor, Windsurf orphaned `workspaceStorage` (checks if project directory still exists), cached `.vsix` installers, webview render caches, JetBrains caches, duplicate IDE app versions. | 🟢 Zero Risk / 🟡 Safe Cache |
 | **Package Managers** | `pip`, `uv`, `poetry`, `npm`, `yarn`, `pnpm` global stores, `node-gyp` header caches, `cargo` registry caches, multi-version `gradle` jars, `maven` `.m2` repository, `go-build`, `Homebrew` bottles, and `APT`/`Pacman` caches. | 🟢 Zero Risk / 🟡 Safe Cache |
+| **Language Runtimes** | Bun global install cache, Zig download & compilation cache, Deno remote modules & LSP cache, Flutter/Dart `.pub-cache` and toolchain artifacts. | 🟡 Safe Cache |
+| **Data Science & Tools** | Conda/Mamba package tarballs and dormant environments, JupyterLab extension builds & runtime cache, Ruby/Gem store & Bundler cache, PHP Composer cache, Linux Snap cache and Flatpak runtimes. | 🟡 Safe Cache / 🔵 Review |
 | **Containers & VMs** | Docker Desktop `Docker.raw` / WSL2 `.vhdx` sparse VM disks, Colima disks, Android Studio AVD emulator snapshots, Xcode `DerivedData` & `iOS DeviceSupport`, UTM virtual machines. | 🟡 Safe Cache / 🔵 Review |
 | **AI & Machine Learning** | Hugging Face model hub cache, PyTorch Hub checkpoints, Ollama local LLM model weights, TensorFlow Hub modules. | 🟡 Safe Cache / 🔵 Review |
 | **Project Repositories** | Scans workspaces (`~/Documents/GitHub`, `~/Projects`, etc.) for dormant `.venv`, bulky `node_modules`, `.next` build caches, Rust `target/`, and loose uncompacted `.git` objects. | 🟡 Safe Cache / 🔵 Review |

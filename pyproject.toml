@@ -40,3 +40,7 @@ dev = [
 
 [project.scripts]
 devsweep = "devsweep.cli:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

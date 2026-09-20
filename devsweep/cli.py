@@ -38,7 +38,9 @@ from devsweep.core.models import Finding, ScanReport
 from devsweep.core.utils import get_disk_usage, redact_report
 from devsweep.modules.ai_ml import AIMLScanner
 from devsweep.modules.containers import ContainerScanner
+from devsweep.modules.data_science import DataScienceScanner
 from devsweep.modules.ides import IDEScanner
+from devsweep.modules.language_runtimes import LanguageRuntimeScanner
 from devsweep.modules.package_managers import PackageManagerScanner
 from devsweep.modules.projects import ProjectScanner
 from devsweep.modules.system_browsers import SystemBrowserScanner
@@ -142,6 +144,8 @@ def main():
         ContainerScanner(),      # Docker, Colima, Android AVDs, Xcode, UTM
         AIMLScanner(),           # HuggingFace, PyTorch Hub, Ollama, TF Hub
         SystemBrowserScanner(),  # Browser caches, updater leftovers, crash logs
+        LanguageRuntimeScanner(), # Bun, Zig, Deno, Flutter/Dart
+        DataScienceScanner(),    # Conda/Mamba, JupyterLab, Ruby/Gem, Composer, Snap, Flatpak
     ]
 
     # ProjectScanner is opt-out: skip it only if --skip-projects is set.
